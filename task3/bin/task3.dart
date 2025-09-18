@@ -8,6 +8,6 @@ void main() {
     for (int j = 1; j <= i; j++) {
       print("$j ");
     }
-    print(""); // move to next line
+    print(" "); // move to next line
   }
 }
