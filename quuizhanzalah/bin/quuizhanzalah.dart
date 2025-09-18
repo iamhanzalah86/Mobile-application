@@ -23,5 +23,4 @@ print("smallest number");
 print(smallest);
 print("odd number sum");
 print(sum);
-
 }
