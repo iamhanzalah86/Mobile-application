@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/animated_turn_indicator.dart';
-import '../widgets/animated_game_cell.dart' ;
-import '../widgets/copyrightfooter.dart';
+import '../widgets/animated_game_cell.dart';
+import 'score_screen.dart';
 
 class GameScreen extends StatefulWidget {
   final String player1Name;
@@ -20,6 +20,8 @@ class _GameScreenState extends State<GameScreen> {
   bool gameOver = false;
   int player1Score = 0;
   int player2Score = 0;
+  int player1Streak = 0;
+  int player2Streak = 0;
 
   void _handleTap(int index) {
     if (board[index] == '' && !gameOver) {
@@ -48,8 +50,12 @@ class _GameScreenState extends State<GameScreen> {
           gameOver = true;
           if (board[pattern[0]] == 'X') {
             player1Score++;
+            player1Streak++;
+            player2Streak = 0; // Reset opponent's streak
           } else {
             player2Score++;
+            player2Streak++;
+            player1Streak = 0; // Reset opponent's streak
           }
         });
         _showWinnerDialog();
@@ -62,6 +68,9 @@ class _GameScreenState extends State<GameScreen> {
       setState(() {
         winner = 'Draw';
         gameOver = true;
+        // Reset both streaks on draw
+        player1Streak = 0;
+        player2Streak = 0;
       });
       _showWinnerDialog();
     }
@@ -73,9 +82,25 @@ class _GameScreenState extends State<GameScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(winner == 'Draw' ? 'Game Draw!' : 'Winner!'),
-          content: Text(
-            winner == 'Draw' ? 'The game is a draw!' : '$winner wins!',
-            style: TextStyle(fontSize: 20.0),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                winner == 'Draw' ? 'The game is a draw!' : '$winner wins!',
+                style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+              ),
+              if (winner != 'Draw') ...[
+                SizedBox(height: 10.0),
+                Text(
+                  'Win Streak: ${winner == widget.player1Name ? player1Streak : player2Streak}',
+                  style: TextStyle(
+                    fontSize: 16.0,
+                    color: winner == widget.player1Name ? Colors.blue : Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ],
           ),
           actions: <Widget>[
             TextButton(
@@ -83,6 +108,13 @@ class _GameScreenState extends State<GameScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
                 _resetGame();
+              },
+            ),
+            TextButton(
+              child: Text('View Scores'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _navigateToScoreScreen();
               },
             ),
             TextButton(
@@ -95,6 +127,22 @@ class _GameScreenState extends State<GameScreen> {
           ],
         );
       },
+    );
+  }
+
+  void _navigateToScoreScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ScoreScreen(
+          player1Name: widget.player1Name,
+          player2Name: widget.player2Name,
+          player1Score: player1Score,
+          player2Score: player2Score,
+          player1Streak: player1Streak,
+          player2Streak: player2Streak,
+        ),
+      ),
     );
   }
 
@@ -115,8 +163,14 @@ class _GameScreenState extends State<GameScreen> {
         centerTitle: true,
         actions: <Widget>[
           IconButton(
+            icon: Icon(Icons.bar_chart),
+            onPressed: _navigateToScoreScreen,
+            tooltip: 'View Scores',
+          ),
+          IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _resetGame,
+            tooltip: 'Reset Game',
           ),
         ],
       ),
@@ -143,10 +197,20 @@ class _GameScreenState extends State<GameScreen> {
                       'Score: $player1Score',
                       style: TextStyle(fontSize: 16.0),
                     ),
+                    if (player1Streak > 0)
+                      Row(
+                        children: <Widget>[
+                          Icon(Icons.local_fire_department, color: Colors.orange, size: 16.0),
+                          Text(
+                            ' $player1Streak',
+                            style: TextStyle(fontSize: 14.0, color: Colors.orange, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
                 Container(
-                  height: 50.0,
+                  height: 70.0,
                   width: 2.0,
                   color: Colors.grey,
                 ),
@@ -164,6 +228,16 @@ class _GameScreenState extends State<GameScreen> {
                       'Score: $player2Score',
                       style: TextStyle(fontSize: 16.0),
                     ),
+                    if (player2Streak > 0)
+                      Row(
+                        children: <Widget>[
+                          Icon(Icons.local_fire_department, color: Colors.orange, size: 16.0),
+                          Text(
+                            ' $player2Streak',
+                            style: TextStyle(fontSize: 14.0, color: Colors.orange, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ],
@@ -204,34 +278,46 @@ class _GameScreenState extends State<GameScreen> {
               ),
             ),
           ),
-          // Reset Button
+          // Action Buttons
           Padding(
             padding: EdgeInsets.all(20.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            child: Column(
               children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    ElevatedButton(
+                      onPressed: _navigateToScoreScreen,
+                      child: Text('View Scores'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).popUntil((route) => route.isFirst);
+                      },
+                      child: Text('Main Menu'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 15.0),
                 ElevatedButton(
                   onPressed: _resetGame,
                   child: Text('Reset Game'),
                   style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  )
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
-                  child: Text('Main Menu'),
-                  style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  )
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ],
             ),
           ),
-          const CopyrightFooter(text: "© 2025 Hanzalah Jamal"),
         ],
       ),
     );
