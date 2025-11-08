@@ -11,7 +11,6 @@ class Flashcard {
     this.isLearned = false,
   });
 
-  // Sample flashcard data
   static List<Flashcard> getSampleCards() {
     return [
       Flashcard(
@@ -67,7 +66,6 @@ class Flashcard {
     ];
   }
 
-  // Generate a new set of cards with different IDs
   static List<Flashcard> getNewCardSet(int startId) {
     final questions = [
       {'q': 'What is Scaffold?', 'a': 'Scaffold provides a framework implementing the basic Material Design layout structure.'},

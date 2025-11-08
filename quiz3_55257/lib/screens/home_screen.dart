@@ -14,27 +14,28 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   List<Flashcard> _flashcards = [];
   bool _isRefreshing = false;
   int _nextCardId = 100;
+  int _learnedCount = 0;
+  int _totalCount = 0;
 
   @override
   void initState() {
     super.initState();
     _flashcards = Flashcard.getSampleCards();
+    _totalCount = _flashcards.length;
   }
-
-  int get _learnedCount => _flashcards.where((card) => card.isLearned).length;
-  int get _totalCount => _flashcards.length;
 
   Future<void> _refreshCards() async {
     setState(() {
       _isRefreshing = true;
     });
 
-    // Simulate network delay
     await Future.delayed(const Duration(seconds: 1));
 
     setState(() {
       _flashcards = Flashcard.getNewCardSet(_nextCardId);
       _nextCardId += 10;
+      _learnedCount = 0;
+      _totalCount = _flashcards.length;
       _isRefreshing = false;
     });
 
@@ -48,9 +49,6 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
   void _markAsLearned(int index) {
     final card = _flashcards[index];
-    setState(() {
-      card.isLearned = true;
-    });
 
     _listKey.currentState?.removeItem(
       index,
@@ -60,6 +58,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
     setState(() {
       _flashcards.removeAt(index);
+      _learnedCount++;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -99,26 +98,72 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     );
   }
 
-  void _addNewCard() {
-    final newCard = Flashcard(
-      id: '${_nextCardId++}',
-      question: 'What is ${_nextCardId % 2 == 0 ? "Hot Reload" : "State Management"}?',
-      answer: _nextCardId % 2 == 0
-          ? 'Hot Reload allows instant code changes without app restart.'
-          : 'State Management handles the flow and storage of data in your Flutter app.',
-    );
+  void _showAddCardDialog() {
+    final questionController = TextEditingController();
+    final answerController = TextEditingController();
 
-    setState(() {
-      _flashcards.insert(0, newCard);
-    });
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Custom Flashcard'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: questionController,
+              decoration: const InputDecoration(
+                labelText: 'Question',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: answerController,
+              decoration: const InputDecoration(
+                labelText: 'Answer',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (questionController.text.isNotEmpty &&
+                  answerController.text.isNotEmpty) {
+                final newCard = Flashcard(
+                  id: '${_nextCardId++}',
+                  question: questionController.text,
+                  answer: answerController.text,
+                );
 
-    _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 400));
+                setState(() {
+                  _flashcards.insert(0, newCard);
+                  _totalCount++;
+                });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('New flashcard added!'),
-        duration: Duration(seconds: 2),
-        backgroundColor: Colors.blue,
+                _listKey.currentState?.insertItem(0,
+                    duration: const Duration(milliseconds: 400));
+
+                Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Custom flashcard added!'),
+                    backgroundColor: Colors.blue,
+                  ),
+                );
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
       ),
     );
   }
@@ -147,25 +192,32 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                       end: Alignment.bottomRight,
                     ),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 30),
-                      const Text(
-                        'Flashcard Quiz',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 30),
+                        const Text(
+                          'Flashcard Quiz',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: _totalCount > 0 ? _learnedCount / _totalCount : 0,
-                        backgroundColor: Colors.white30,
-                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: LinearProgressIndicator(
+                            value: _totalCount > 0 ? _learnedCount / _totalCount : 0,
+                            backgroundColor: Colors.white.withOpacity(0.3),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                            minHeight: 6,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -237,7 +289,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _addNewCard,
+        onPressed: _showAddCardDialog,
         icon: const Icon(Icons.add),
         label: const Text('Add Card'),
         backgroundColor: Colors.blue,
