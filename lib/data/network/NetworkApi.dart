@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:http/http.dart';
 import 'package:mvvm_practice/data/app_exceptions.dart';
 import 'package:mvvm_practice/data/network/baseapi.dart';
@@ -34,6 +33,8 @@ class NetworkApi extends baseapi {
     }
     return responseJson;
   }
+
+
   dynamic returnResponse (http.Response response){
 
    switch(response.statusCode){
