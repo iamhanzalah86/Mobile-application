@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
+import '../utils/dowloads.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userId;
@@ -309,10 +310,28 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Widget _buildPostGridItem(dynamic note) {
     return GestureDetector(
-      onTap: () {
-        // Navigate to note details
-        print('Tapped on note: ${note['_id']}');
-      },
+        onTap: () async {
+          try {
+            final baseUrl = 'http://10.0.2.2:5000/'; // Replace with your backend URL
+            final fileUrl = note['fileUrl'] != null && note['fileUrl'].startsWith('http')
+                ? note['fileUrl']
+                : baseUrl + (note['fileUrl'] ?? '');
+            final fileName = fileUrl.split('/').last;
+
+            if (note['fileUrl'] != null && note['fileUrl']!.isNotEmpty) {
+              await downloadAndOpenFile(fileUrl, fileName); // call your download function
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('No file available to download')),
+              );
+            }
+          } catch (e) {
+            print('Download error: $e');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Download failed: $e')),
+            );
+          }
+        },
       child: Container(
         color: Colors.grey[900],
         child: note['imageUrl'] != null

@@ -3,7 +3,8 @@ import 'package:notessharingapp/screens/user_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
-import 'user_profile_screen.dart';
+import 'user_screen.dart';
+import '../utils/dowloads.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -260,6 +261,7 @@ class _SearchScreenState extends State<SearchScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
+
         children: [
           // Profile Picture
           GestureDetector(

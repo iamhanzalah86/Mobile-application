@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/notes_provider.dart';
-import '../widgets/note_card.dart';
+//import '../widgets/note_card.dart';
 import 'upload_note_screen.dart';
+import '../utils/dowloads.dart';
 
 class FeedScreen extends StatefulWidget {
   @override
